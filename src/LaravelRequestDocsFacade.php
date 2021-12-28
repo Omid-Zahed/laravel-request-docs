@@ -5,7 +5,7 @@ namespace OmidZahed\LaravelRequestDocs;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Rakutentech\LaravelRequestDocs\LaravelRequestDocs
+ * @see \OmidZahed\LaravelRequestDocs\LaravelRequestDocs
  */
 class LaravelRequestDocsFacade extends Facade
 {

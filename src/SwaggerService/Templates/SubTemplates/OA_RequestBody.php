@@ -2,7 +2,7 @@
 namespace OmidZahed\LaravelRequestDocs\SwaggerService\Templates\SubTemplates;
 
 
-class OA_RequestBody extends \Rakutentech\LaravelRequestDocs\SwaggerService\Templates\Template
+class OA_RequestBody extends \OmidZahed\LaravelRequestDocs\SwaggerService\Templates\Template
 {
 
     protected  $property_template='

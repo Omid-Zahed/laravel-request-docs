@@ -1,7 +1,7 @@
 <?php
 namespace OmidZahed\LaravelRequestDocs\SwaggerService\Templates\SubTemplates;
 
-class OA_Response extends \Rakutentech\LaravelRequestDocs\SwaggerService\Templates\Template
+class OA_Response extends \OmidZahed\LaravelRequestDocs\SwaggerService\Templates\Template
 {
 
     protected  $template_string='*     @OA\Response(

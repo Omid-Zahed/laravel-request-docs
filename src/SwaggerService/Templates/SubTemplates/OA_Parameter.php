@@ -3,7 +3,7 @@ namespace OmidZahed\LaravelRequestDocs\SwaggerService\Templates\SubTemplates;
 
 use function Couchbase\defaultDecoder;
 
-class OA_Parameter extends \Rakutentech\LaravelRequestDocs\SwaggerService\Templates\Template
+class OA_Parameter extends \OmidZahed\LaravelRequestDocs\SwaggerService\Templates\Template
 {
 
 
