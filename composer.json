@@ -1,5 +1,5 @@
 {
-    "name": "omid-zahed/laravel-request-docs",
+    "name": "omidzahed/laravel-request-docs",
     "description": "Automatically generate Laravel docs from request rules, controllers and routes",
     "keywords": [
         "rakutentech",

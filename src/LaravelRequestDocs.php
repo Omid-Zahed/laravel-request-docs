@@ -2,20 +2,19 @@
 
 namespace OmidZahed\LaravelRequestDocs;
 
-use ErrorException;
 use Route;
 use ReflectionMethod;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Exception;
-use Throwable;
 
 class LaravelRequestDocs
 {
 
     public function getDocs()
     {
+
         $docs = [];
         $excludePatterns = config('request-docs.hide_matching') ?? [];
         $controllersInfo = $this->getControllersInfo();
@@ -36,10 +35,12 @@ class LaravelRequestDocs
                 continue;
             }
         }
+
+
         return array_filter($docs);
     }
 
-    public function sortDocs(array $docs, $sortBy = 'default'): array
+    public function sortDocs(array $docs, $sortBy = 'default'): Array
     {
         if ($sortBy === 'route_names') {
             sort($docs);
@@ -74,17 +75,20 @@ class LaravelRequestDocs
         return $sorted;
     }
 
-    public function getControllersInfo(): array
+    protected function hasAuthToken($route){
+        $route_middleware=!is_array($route->action['middleware']) ? [$route->action['middleware']] : $route->action['middleware'];
+
+       $middleware_need_token= config("request-docs.middleware_need_token",['auth:api']);
+
+       foreach ($middleware_need_token as $middleware):
+           if (in_array($middleware,$route_middleware))return true;
+           endforeach;
+    }
+    public function getControllersInfo(): Array
     {
         $controllersInfo = [];
         $routes = collect(Route::getRoutes());
-        $onlyRouteStartWith = config('request-docs.only_route_uri_start_with') ?? '';
-
         foreach ($routes as $route) {
-            if($onlyRouteStartWith && !Str::startsWith($route->uri, $onlyRouteStartWith)){
-                continue;
-            }
-
             try {
                 /// Show Pnly Controller Name
                 $controllerFullPath = explode('@', $route->action['controller'])[0];
@@ -92,7 +96,7 @@ class LaravelRequestDocs
                 $controllerName = substr($controllerFullPath, $getStartWord);
 
                 /// Has Auth Token
-                $hasAuthToken = !is_array($route->action['middleware']) ? [$route->action['middleware']] : $route->action['middleware'];
+                $hasAuthToken = $this->hasAuthToken($route);
 
                 $controllersInfo[] = [
                     'uri'                   => $route->uri,
@@ -103,7 +107,7 @@ class LaravelRequestDocs
                     'method'                => explode('@', $route->action['controller'])[1],
                     'rules'                 => [],
                     'docBlock'              => "",
-                    'bearer'                => in_array('auth:api', $hasAuthToken)
+                    'bearer'                => $hasAuthToken
                 ];
             } catch (Exception $e) {
                 continue;
@@ -113,7 +117,7 @@ class LaravelRequestDocs
         return $controllersInfo;
     }
 
-    public function appendRequestRules(array $controllersInfo)
+    public function appendRequestRules(Array $controllersInfo)
     {
         foreach ($controllersInfo as $index => $controllerInfo) {
             $controller       = $controllerInfo['controller_full_path'];
@@ -129,15 +133,11 @@ class LaravelRequestDocs
                 $requestClass = null;
                 try {
                     $requestClass = new $requestClassName();
-                } catch (Throwable $th) {
+                } catch (\Throwable $th) {
                     //throw $th;
                 }
                 if ($requestClass instanceof FormRequest) {
-                    try {
-                        $controllersInfo[$index]['rules'] = $this->flattenRules($requestClass->rules());
-                    } catch (ErrorException $th) {
-                        $controllerInfo[$index]['rules'] = $this->rulesByRegex($requestClassName);
-                    }
+                    $controllersInfo[$index]['rules'] = $this->flattenRules($requestClass->rules());
                     $controllersInfo[$index]['docBlock'] = $this->lrdDocComment($reflectionMethod->getDocComment());
                 }
             }
@@ -193,36 +193,6 @@ class LaravelRequestDocs
                 $rules[$attribute][] = $rule;
             }
         }
-
-        return $rules;
-    }
-
-    public function rulesByRegex($requestClassName)
-    {
-        $data = new ReflectionMethod($requestClassName, 'rules');
-        $lines = file($data->getFileName());
-        $rules = [];
-        for ($i = $data->getStartLine() - 1; $i <= $data->getEndLine() - 1; $i++) {
-            preg_match_all("/(?:'|\").*?(?:'|\")/", $lines[$i], $matches);
-            $rules[] =  $matches;
-        }
-
-        $rules = collect($rules)
-            ->filter(function ($item) {
-                return count($item[0]) > 0;
-            })
-            ->transform(function ($item) {
-                $fieldName = Str::of($item[0][0])->replace(['"', "'"], '');
-                $definedFieldRules = collect(array_slice($item[0], 1))->transform(function ($rule) {
-                    return Str::of($rule)->replace(['"', "'"], '')->__toString();
-                })->toArray();
-
-                return ['key' => $fieldName, 'rules' => $definedFieldRules];
-            })
-            ->keyBy('key')
-            ->transform(function ($item) {
-                return $item['rules'];
-            })->toArray();
 
         return $rules;
     }

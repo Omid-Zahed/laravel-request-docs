@@ -22,12 +22,22 @@ return [
      */
     'sort_by' => 'default',
 
-    //Use only routes where ->uri start with next string Using Str::startWith( . e.g. - /api/mobile
-    'only_route_uri_start_with' => '',
-
     'hide_matching' => [
         "#^telescope#",
         "#^docs#",
         "#^request-docs#",
+    ],
+
+
+   "export_driver"=>"swagger",
+   "swagger_export_file_path"=>"./app/swagger",
+   "swagger_project_title"=>"app",
+   "swagger_project_version"=>"1.0.0",
+    "middleware_need_token"=>[
+        "auth:admin-api","auth:api"
     ]
+
+
+
+
 ];
