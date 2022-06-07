@@ -2,6 +2,7 @@
 
 namespace OmidZahed\LaravelRequestDocs;
 
+
 use Route;
 use ReflectionMethod;
 use Illuminate\Http\Request;
@@ -78,11 +79,11 @@ class LaravelRequestDocs
     protected function hasAuthToken($route){
         $route_middleware=!is_array($route->action['middleware']) ? [$route->action['middleware']] : $route->action['middleware'];
 
-       $middleware_need_token= config("request-docs.middleware_need_token",['auth:api']);
+        $middleware_need_token= config("request-docs.middleware_need_token",['auth:api']);
 
-       foreach ($middleware_need_token as $middleware):
-           if (in_array($middleware,$route_middleware))return true;
-           endforeach;
+        foreach ($middleware_need_token as $middleware):
+            if (in_array($middleware,$route_middleware))return true;
+        endforeach;
     }
     public function getControllersInfo(): Array
     {
@@ -97,16 +98,33 @@ class LaravelRequestDocs
 
                 /// Has Auth Token
                 $hasAuthToken = $this->hasAuthToken($route);
+                //get class info
+                $method= explode('@', $route->action['controller'])[1];
+                $rc = new \ReflectionClass($controllerFullPath);
+
+                $document_text=$rc->getMethod($method)->getDocComment();
+
+                $document="";
+                if($document_text){
+                    $regex="/(?<=<swagger>)(.|\w\s)+(?=<\/swagger>)/";
+                    preg_match($regex, $document_text, $matches);
+                    $document=$matches[0]??"";
+                }
+//                if($controllerName=="LeitnerController" and $method=="store"){
+////                dd($document_text,$document);
+//                }
+
 
                 $controllersInfo[] = [
+                    "method_doc"=>$document,
                     'uri'                   => $route->uri,
                     'methods'               => $route->methods,
                     'middlewares'           => !is_array($route->action['middleware']) ? [$route->action['middleware']] : $route->action['middleware'],
                     'controller'            => $controllerName,
                     'controller_full_path'  => $controllerFullPath,
-                    'method'                => explode('@', $route->action['controller'])[1],
+                    'method'                =>$method,
                     'rules'                 => [],
-                    'docBlock'              => "",
+                    'docBlock'              => $document,
                     'bearer'                => $hasAuthToken
                 ];
             } catch (Exception $e) {
@@ -186,14 +204,18 @@ class LaravelRequestDocs
             } else if (is_array($rule)) {
                 $rulesStrs = [];
                 foreach ($rule as $ruleItem) {
-                    $rulesStrs[] = is_object($ruleItem) ? get_class($ruleItem) : $ruleItem;
+                    if (is_object($ruleItem)) {
+                        method_exists($ruleItem, '__toString') ? $rulesStrs[] = $ruleItem->__toString() : $rulesStrs[] = get_class($ruleItem);
+                    } else {
+                        $rulesStrs[] = $ruleItem;
+                    }
+
                 }
                 $rules[$attribute][] = implode("|", $rulesStrs);
             } else {
                 $rules[$attribute][] = $rule;
             }
         }
-
         return $rules;
     }
 }

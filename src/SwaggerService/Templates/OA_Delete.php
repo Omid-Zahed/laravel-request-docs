@@ -15,11 +15,13 @@ class OA_Delete extends Template {
  ';
     protected function genereate($data)
     {
+        $description="get method for controller ".$data["controller"];
+        if(!empty($data["method_doc"])) {  $description=$data["method_doc"];}
         $data_replace=[
             "{path}"=>"/".$data["uri"],
-            "{operationId}"=>$data["uri"]."__delete",
+            "{operationId}"=>$data["uri"]."__post",
             "{tags}"=>'"'.$data["controller"].'"',
-            "{description}"=>"put method for controller ".$data["controller"],
+            "{description}"=>$description,
             "{child}"=>(new OA_SubTemplate($data))->render()
         ];
         return str_replace(array_keys($data_replace),array_values($data_replace),$this->template_string);
