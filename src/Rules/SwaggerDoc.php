@@ -28,7 +28,7 @@ class SwaggerDoc implements Rule
      */
     public function passes($attribute, $value)
     {
-        return $value;
+        return true;
     }
 
     /**
